@@ -1,0 +1,139 @@
+; Blank rom file
+; Produced with aid of documentation and similar files
+
+;;;;;;;;;;;;;;Includes
+
+;;;;;;;;;;;;;;Assembler directives
+
+;;;;;;;;;;;;;;Cartridge Header
+
+;Restart calls
+;There are eight of these from 0x00 to 0x40.
+;Each takes up eight bytes of space, and takes a one-byte instruction to call
+;Any short, commonly used function can be slotted into a RST for speed.
+
+SECTION "RST $00", Home[$00]
+RST_00:
+	reti											;return and enable interrupts again, good stub for a restart call
+
+SECTION "RST $08", Home[$08]
+RST_08:
+	reti
+
+SECTION "RST $10", Home[$10]
+RST_10:
+	reti											
+
+SECTION "RST $18", Home[$18]
+RST_18:
+	reti
+
+SECTION "RST $20", Home[$20]
+RST_20:
+	reti											
+	
+SECTION "RST $28", Home[$28]
+RST_28:
+	reti
+
+SECTION "RST $30", Home[$30]
+RST_30:
+	reti											
+	
+SECTION "RST $38", Home[$38]
+RST_38:
+	reti
+
+
+;;;;;;;;;;;;;;Interrupt Routines!
+
+;These simply need to be created based on the documentation
+;Again eight bytes each
+
+SECTION "V-blank Interrupt", Home[$40] 				;called on vblank; can write to VRAM; lasts about 1.1 ms
+INT_VBLANK:
+	reti
+
+SECTION "LCDC Interrupt", Home[$48]					;can be called when a line is about to be drawn; used for post-processing effects
+INT_LCDC:
+	reti
+
+SECTION "Timer Interrupt", Home[$50]				;called when timer rolls over to 0; varying interval based on user-set timer speed
+INT_TIMER:
+	reti
+
+SECTION "Serial Interrupt", Home[$58] 				;called when the link cable finishes sending a byte of data
+INT_SERIAL:
+	reti
+
+SECTION "Button Interrupt", Home[$60]				;called when a button is released; due to bounce, many false positives
+INT_BUTTON:
+	reti
+
+;;;;;;;;;;;;;;Execution start point
+SECTION "Execution Start", Home[$100]
+	nop												;$100
+	jp			Start 								;$101, $102, $103
+
+
+;;;;;;;;;;;;;;Cartridge information
+
+;Nintendo logo, $104 through $133
+;Straight up copy paste
+	DB	$CE,$ED,$66,$66,$CC,$0D,$00,$0B,$03,$73,$00,$83,$00,$0C,$00,$0D
+	DB	$00,$08,$11,$1F,$88,$89,$00,$0E,$DC,$CC,$6E,$E6,$DD,$DD,$D9,$99
+	DB	$BB,$BB,$67,$63,$6E,$0E,$EC,$CC,$DD,$DC,$99,$9F,$BB,$B9,$33,$3E
+
+;$134 through $13E Title (11 characters)
+	DB "BLANK ROM", $00, $00
+
+;$13F through $142 Product code (4 characters); sometimes used as extension of title
+	DB $00, $00, $00, $00
+
+;$143 Gameboy Color Compatibility code
+	DB $00											;$00 DMG, $80 DMG/GBC, $C0 GBC
+
+;$144, $145 Licensee code (we have no license obviously); $144 is more significant
+	DB $00, $00
+
+;$146 SGB indicator, $00 gameboy $03 SGB functionality exists
+	DB $00
+
+;$147 Rom type, refer to cheat sheet. $00 ROM only
+	DB $00
+
+;$148 ROM size, refer to documentation. $02 8 banks
+	DB $02
+
+;$149 Cartridge RAM size; you need cartridge ram backed by battery to save
+	DB $00
+
+;$14A Region Code $00 Japan $01 Not-Japan
+	DB $01
+
+;$14B Old licensee code, must be $33
+	DB $33
+
+;$14C Mask ROM version number, handled by fix stage
+	DB $00
+
+;$14D Complement check, handled by fix stage
+	DB $00
+
+;$14E, $14F Checksum handled by fix stage
+	DB $00, $00
+
+
+;;;;;;;;;;;;;;Program start
+SECTION "Program Start", Home[$0150]
+;$0150 Beginning of executable code 2
+Start::
+
+
+
+Loop::
+	halt
+	nop
+	jp Loop				;run execution forever
+
+
