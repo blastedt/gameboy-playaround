@@ -24,7 +24,7 @@ def tilegen(s):
 			print("\nDB ", end="")
 		count = count % 8
 
-def tilegen_to_string(s):
+def tilegen_to_string(s, argv):
 	res = ""
 	byts = make_byte_list(s)
 	res += "DB "
@@ -32,11 +32,12 @@ def tilegen_to_string(s):
 	for byt in byts:
 		res += "$%X,$%X" % (byt,byt)
 		count += 2
-		if (count < 8):
+		if (count % 8 != 0):
 			res += ","
-		else:
+		elif count % 16 == 8:
 			res += "\nDB "
-		count = count % 8
+		else:
+			res += "\t;" + argv[count/16 - 1] + "\nDB "
 	res = res[:-4]
 	return res
 
@@ -67,7 +68,7 @@ def main(argv):
 	binary = ""
 	for img in argv:
 		binary += img_to_binary(img)
-	s = tilegen_to_string(binary)
+	s = tilegen_to_string(binary, argv)
 	print("\n"+s)
 	f = open("tiles.asm", "w")
 	f.write(s)
