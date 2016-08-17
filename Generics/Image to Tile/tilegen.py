@@ -16,7 +16,7 @@ def tilegen(s):
 	print("DB ", end="")
 	count = 0
 	for byt in byts:
-		print("$%X,$%X" % (byt,byt), end="")
+		print("$%02X,$%02X" % (byt,byt), end="")
 		count += 2
 		if (count < 8):
 			print(",", end="")
@@ -30,7 +30,7 @@ def tilegen_to_string(s, argv):
 	res += "DB "
 	count = 0
 	for byt in byts:
-		res += "$%X,$%X" % (byt,byt)
+		res += "$%02X,$%02X" % (byt,byt)
 		count += 2
 		if (count % 8 != 0):
 			res += ","
