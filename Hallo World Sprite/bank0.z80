@@ -139,10 +139,12 @@ Start::
 	ld		A,				0				
 	ldh		[_LCDC],		A				;turn off LCD
 
+	call 	INIT_OAM_MIRROR
 	call 	CLEAR_MAP
 	call	LOAD_TILES
-	call	LOAD_MAP
-
+	call	LOAD_DMA_TRANSFER_HIGH
+	call	LOAD_OAM_MIRROR
+	call	OAM_TRANSFER
 
 	ld		A,				_PALETTE_NORMAL
 	ldh		[_BG_PALETTE],	A
@@ -153,9 +155,8 @@ Start::
 
 
 Loop::
-
-	halt
-	nop
+	call	WAIT_VBLANK
+	call	OAM_TRANSFER
 	jp Loop				;run execution forever
 
 
@@ -191,26 +192,31 @@ LOAD_TILES::
 	push	DE
 	push	BC
 
-	ld		HL,				OAM_MIRROR
+	ld		HL,				_TILE_DATA_0
 	ld		DE,				FONT_TILES
 	ld		BC,				16*27
 	call	MEMCPY
+	
+
 
 	pop		BC
 	pop		DE
 	pop		HL
 	ret
-
-LOAD_OAM_MAP::
+	
+;Load the oam mirror with the Hello World pre-set
+LOAD_OAM_MIRROR::
 	push	HL
 	push	DE
 	push	BC
 
-	ld		HL,				_BG_MAP_0
+	ld		HL,				OAM_MIRROR
 	ld		DE,				HELLO_WORLD_OAM
 	ld		BC,				4*12				;$30 of the $A0 bytes allowed
 	call 	MEMCPY
 
+	ld		(OAM_CHANGE_FLAG),	$1			;set oam change flag
+		
 	pop		BC
 	pop		DE
 	pop		HL
