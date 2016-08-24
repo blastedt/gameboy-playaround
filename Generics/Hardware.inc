@@ -10,6 +10,9 @@ _VRAM         		EQU  			$8000 ; $8000->$A000
 
 _BG_MAP_0			EQU				$9800
 
+_TILE_DATA_0		EQU				$8000 ; $8000->$8FFF
+_TILE_DATA_1		EQU				$8800 ; $Should be mostly unused? This is the signed bank, ptr is to -128
+
 ;;;;;;;;;;;;;;Video
 
 _BG_PALETTE			EQU				$FF47

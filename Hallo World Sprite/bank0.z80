@@ -131,7 +131,7 @@ SECTION "Program Start", Home[$0150]
 ;$0150 Beginning of executable code 2
 Start::
 	di										;disable interrupts, not using them
-	ld		sp,				$FFFE			;default value but can't assume
+	ld		sp,				$DFFF			;put stack at top of internal RAM
 	call 	WAIT_VBLANK						;wait for vblank so we can write to VRAM
 
 	ld		A,				0				
@@ -154,18 +154,7 @@ Start::
 
 
 Loop::
-	;call	WAIT_VBLANK
 
-	;ld		A,				0				
-	;ldh		[_LCDC],		A				;turn off LCD
-
-	;call	SCROLL
-
-	;ld		A,				_PALETTE_NORMAL
-	;ldh		[_BG_PALETTE],	A
-
-	;ld		A,				%10010001		;LCD on, BG tiles $8000, tile map 0, bg display on
-	;ldh		[_LCDC],		A
 	halt
 	nop
 	jp Loop				;run execution forever
@@ -183,15 +172,15 @@ SCROLL::
 	ld		[_SCX],			A
 	ret
 
-CLEAR_MAP::
-	push	HL
-	push	BC
+INIT_OAM_MIRROR::
+	push 	HL
+	push 	BC
 	push	DE
 
-	ld		HL,				_BG_MAP_0
-	ld		BC,				$400			;size of bg map 0
-	ld		D,				0
-	call	MEMSET							;clear the map
+	ld		HL,				OAM_MIRROR				
+	ld		BC,				$A1				;OAM mirror plus flag
+	ld		D,				$0
+	call	MEMSET
 
 	pop		DE
 	pop		BC
@@ -203,7 +192,7 @@ LOAD_TILES::
 	push	DE
 	push	BC
 
-	ld		HL,				_VRAM
+	ld		HL,				_TILE_DATA_0
 	ld		DE,				FONT_TILES
 	ld		BC,				16*27
 	call	MEMCPY
@@ -228,6 +217,30 @@ LOAD_MAP::
 	pop		HL
 	ret
 
+
+DMA_TRANSFER::
+	push 	AF
+
+	ld		A,				[_OAM_CHANGE_FLAG]
+	call	nz,				DMA_TRANSFER_HIGH	;only do dma transfer if there are changes to propagate
+	ld		A,				$0
+	ld		[_OAM_CHANGE_FLAG],	A				;reset flag
+	pop 	AF
+	ret
+
+SECTION "DMA Transfer High", HRAM
+;Does a DMA transfer and waits
+DMA_TRANSFER_HIGH::
+	ld		A,				_OAM_MIRROR
+	ld 		($FF46),		A
+
+	ld		A,				$28				;dec 40, need to wait for transfer to complete
+DTH_WAIT:	
+	dec		A								;1 cycle
+	jp		nz,				DTH_WAIT		;4 cycles
+											;total 200 cycles ~ 210 microseconds
+	ret										;get out of high ram
+	
 SECTION "Tiles", Home
 FONT_TILES::
 DB $00,$00,$00,$00,$00,$00,$00,$00
@@ -290,3 +303,11 @@ SECTION "Map", Home
 HELLO_WORLD_MAP:
 DB $08,$05,$0C,$0C,$0F,$00,$17,$0F  ;HELLO WO
 DB $12,$0C,$04						;RLD
+
+SECTION "OAM Mirror", BSS[$C000]
+_OAM_MIRROR	EQU	$C0
+OAM_MIRROR:
+DS $A0								;0->9F, oam mirror
+OAM_CHANGE_FLAG:
+DS 1
+
