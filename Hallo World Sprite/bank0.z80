@@ -7,6 +7,8 @@ INCLUDE "../Generics/Hardware.inc"
 
 ;;;;;;;;;;;;;;Assembler directives
 
+DMA_HIGH_LOC	EQU		$FF80
+
 ;;;;;;;;;;;;;;Cartridge Header
 
 ;Restart calls
@@ -141,9 +143,6 @@ Start::
 	call	LOAD_TILES
 	call	LOAD_MAP
 
-	;ld		A,				$10
-	;ldh		[_SCX],			A
-	;ldh		[_SCY],			A
 
 	ld		A,				_PALETTE_NORMAL
 	ldh		[_BG_PALETTE],	A
@@ -192,7 +191,7 @@ LOAD_TILES::
 	push	DE
 	push	BC
 
-	ld		HL,				_TILE_DATA_0
+	ld		HL,				OAM_MIRROR
 	ld		DE,				FONT_TILES
 	ld		BC,				16*27
 	call	MEMCPY
@@ -202,14 +201,14 @@ LOAD_TILES::
 	pop		HL
 	ret
 
-LOAD_MAP::
+LOAD_OAM_MAP::
 	push	HL
 	push	DE
 	push	BC
 
 	ld		HL,				_BG_MAP_0
-	ld		DE,				HELLO_WORLD_MAP
-	ld		BC,				12
+	ld		DE,				HELLO_WORLD_OAM
+	ld		BC,				4*12				;$30 of the $A0 bytes allowed
 	call 	MEMCPY
 
 	pop		BC
@@ -217,19 +216,31 @@ LOAD_MAP::
 	pop		HL
 	ret
 
+LOAD_DMA_TRANSFER_HIGH::
+	push 	HL
+	push 	DE
+	push	BC
+	
+	ld		HL,				DMA_HIGH_LOC
+	ld		DE,				DMA_TRANSFER_HIGH
+	ld		BC,				DMA_TRANSFER_HIGH_END-DMA_TRANSFER_HIGH
+	call	MEMCPY
+	
+	pop 	BC
+	pop		DE
+	pop		HL
+	ret
 
 DMA_TRANSFER::
 	push 	AF
 
 	ld		A,				[_OAM_CHANGE_FLAG]
-	call	nz,				DMA_TRANSFER_HIGH	;only do dma transfer if there are changes to propagate
+	call	nz,				DMA_HIGH_LOC		;only do dma transfer if there are changes to propagate
 	ld		A,				$0
 	ld		[_OAM_CHANGE_FLAG],	A				;reset flag
 	pop 	AF
 	ret
 
-SECTION "DMA Transfer High", HRAM
-;Does a DMA transfer and waits
 DMA_TRANSFER_HIGH::
 	ld		A,				_OAM_MIRROR
 	ld 		($FF46),		A
@@ -240,6 +251,7 @@ DTH_WAIT:
 	jp		nz,				DTH_WAIT		;4 cycles
 											;total 200 cycles ~ 210 microseconds
 	ret										;get out of high ram
+DMA_TRANSFER_HIGH_END:
 	
 SECTION "Tiles", Home
 FONT_TILES::
@@ -299,10 +311,24 @@ DB $FE,$FE,$FE,$FE,$06,$06,$1C,$1C
 DB $38,$38,$60,$60,$FE,$FE,$FE,$FE	;img/026z.gray
 
 
-SECTION "Map", Home
-HELLO_WORLD_MAP:
-DB $08,$05,$0C,$0C,$0F,$00,$17,$0F  ;HELLO WO
-DB $12,$0C,$04						;RLD
+SECTION "Hello World OAM", Home
+HELLO_WORLD_OAM:
+;Tilemap
+;DB $08,$05,$0C,$0C,$0F,$00,$17,$0F  ;HELLO WO
+;DB $12,$0C,$04						;RLD
+;OAM format - byte 0 y+16, byte 1 x+8, byte 2 pattern number, byte 3 flags
+DB $10, $08, $08, %00000000			;(8, 16), pattern 8, no flags
+DB $10, $10, $05, $0
+DB $10, $18, $0C, $0
+DB $10, $20, $0C, $0
+DB $10, $28, $0F, $0
+;DB $10, $30, $00, $0				; no need for a blank sprite
+DB $10, $38, $17, $0
+DB $10, $40, $0F, $0
+DB $10, $48, $12, $0
+DB $10, $50, $0C, $0
+DB $10, $58, $04, $0
+
 
 SECTION "OAM Mirror", BSS[$C000]
 _OAM_MIRROR	EQU	$C0

@@ -1,0 +1,12 @@
+!SESSION Tue Aug 23 16:35:24 EDT 2016 ------------------------------------------
+!ENTRY org.eclipse.equinox.launcher 4 0 2016-08-23 16:35:24.713
+!MESSAGE Exception launching the Eclipse Platform:
+!STACK
+java.lang.NumberFormatException: null
+	at java.lang.Long.parseLong(Long.java:552)
+	at java.lang.Long.parseLong(Long.java:631)
+	at org.eclipse.equinox.launcher.Main.getLastKnownConfigIniBaseTimestamp(Main.java:1890)
+	at org.eclipse.equinox.launcher.Main.processConfiguration(Main.java:1829)
+	at org.eclipse.equinox.launcher.Main.basicRun(Main.java:563)
+	at org.eclipse.equinox.launcher.Main.run(Main.java:1450)
+
