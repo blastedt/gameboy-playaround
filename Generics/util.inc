@@ -10,7 +10,7 @@ WAIT_VBLANK::
 ;Loads the memory at HL with size BC with the value at D 
 ;Changes HL and BC
 MEMSET::
-	ld 	[HL],	D
+	ld 		[HL],	D
 	inc		HL
 	dec		BC
 	ld		A,		B
