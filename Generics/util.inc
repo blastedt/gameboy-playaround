@@ -41,20 +41,22 @@ MEMCPY::
 GET_INPUT::
 	push BC
 
-	ld 		($FF00),	%00100000			; load P14 by setting it low
-	ld		A,			($FF00)
-	ld		A,			($FF00)
-	ld		A,			($FF00)				; getting arrow keys
-	ld		A,			($FF00)				; bounce
+	ld		A,			%00100000
+	ld 		[$FF00],	A					; load P14 by setting it low
+	ld		A,			[$FF00]
+	ld		A,			[$FF00]
+	ld		A,			[$FF00]				; getting arrow keys
+	ld		A,			[$FF00]				; bounce
 	and		%00001111						; get only the output
 	swap	A								; move nibblets to other side
 	ld		B,			A					; store information
 	
-	ld		($FF00),	%00010000			; Load P15
-	ld		A,			($FF00)
-	ld		A,			($FF00)
-	ld		A,			($FF00)
-	ld		A,			($FF00)
+	ld		A,			%00010000
+	ld		[$FF00],	A					; Load P15
+	ld		A,			[$FF00]
+	ld		A,			[$FF00]
+	ld		A,			[$FF00]
+	ld		A,			[$FF00]
 	and		%00001111						; bounce and output mask
 	or		B								; add arrow keys
 	

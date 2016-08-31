@@ -127,6 +127,13 @@ SECTION "Execution Start", Home[$100]
 ;$14E, $14F Checksum handled by fix stage
 	DB $00, $00
 
+;OAM Mirror section, since we can't write to the OAM directly
+SECTION "OAM Mirror", BSS[$C000]
+_OAM_MIRROR	EQU	$C0
+OAM_MIRROR:
+DS $A0								;0->9F, oam mirror
+OAM_CHANGE_FLAG:
+DS 1
 
 ;;;;;;;;;;;;;;Program start
 SECTION "Program Start", Home[$0150]
@@ -140,15 +147,15 @@ Start::
 	ldh		[_LCDC],		A				;turn off LCD
 
 	call 	INIT_OAM_MIRROR
-	call 	CLEAR_MAP
+	;call 	CLEAR_MAP
 	call	LOAD_TILES
 	call	LOAD_DMA_TRANSFER_HIGH
 	call	LOAD_OAM_MIRROR
-	call	OAM_TRANSFER
+	call	DMA_TRANSFER
 
 	ld		A,				_PALETTE_NORMAL
 	ldh		[_BG_PALETTE],	A
-
+	
 	ld		A,				%10010001		;LCD on, BG tiles $8000, tile map 0, bg display on
 	ldh		[_LCDC],		A
 
@@ -156,7 +163,7 @@ Start::
 
 Loop::
 	call	WAIT_VBLANK
-	call	OAM_TRANSFER
+	call	DMA_TRANSFER
 	jp Loop				;run execution forever
 
 
@@ -196,8 +203,6 @@ LOAD_TILES::
 	ld		DE,				FONT_TILES
 	ld		BC,				16*27
 	call	MEMCPY
-	
-
 
 	pop		BC
 	pop		DE
@@ -215,7 +220,8 @@ LOAD_OAM_MIRROR::
 	ld		BC,				4*12				;$30 of the $A0 bytes allowed
 	call 	MEMCPY
 
-	ld		(OAM_CHANGE_FLAG),	$1			;set oam change flag
+	ld		A,				$1
+	ld		[OAM_CHANGE_FLAG],	A			;set oam change flag
 		
 	pop		BC
 	pop		DE
@@ -240,16 +246,16 @@ LOAD_DMA_TRANSFER_HIGH::
 DMA_TRANSFER::
 	push 	AF
 
-	ld		A,				[_OAM_CHANGE_FLAG]
+	ld		A,				[OAM_CHANGE_FLAG]
 	call	nz,				DMA_HIGH_LOC		;only do dma transfer if there are changes to propagate
 	ld		A,				$0
-	ld		[_OAM_CHANGE_FLAG],	A				;reset flag
+	ld		[OAM_CHANGE_FLAG],	A				;reset flag
 	pop 	AF
 	ret
 
 DMA_TRANSFER_HIGH::
 	ld		A,				_OAM_MIRROR
-	ld 		($FF46),		A
+	ld 		[$FF46],		A
 
 	ld		A,				$28				;dec 40, need to wait for transfer to complete
 DTH_WAIT:	
@@ -336,10 +342,5 @@ DB $10, $50, $0C, $0
 DB $10, $58, $04, $0
 
 
-SECTION "OAM Mirror", BSS[$C000]
-_OAM_MIRROR	EQU	$C0
-OAM_MIRROR:
-DS $A0								;0->9F, oam mirror
-OAM_CHANGE_FLAG:
-DS 1
+
 
