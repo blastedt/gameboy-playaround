@@ -29,3 +29,36 @@ MEMCPY::
 	or		C
 	jr		nz,		MEMCPY				;loop
 	ret
+	
+;GET_INPUT
+;Loads A with the current input, accounting for bounce.
+;For all of $FF00, 0 means on and 1 means off.
+;Bit order
+;7 Down		3 Start
+;6 Up		2 Select
+;5 Left		1 B
+;4 Right	0 A
+GET_INPUT::
+	push BC
+
+	ld 		($FF00),	%00100000			; load P14 by setting it low
+	ld		A,			($FF00)
+	ld		A,			($FF00)
+	ld		A,			($FF00)				; getting arrow keys
+	ld		A,			($FF00)				; bounce
+	and		%00001111						; get only the output
+	swap	A								; move nibblets to other side
+	ld		B,			A					; store information
+	
+	ld		($FF00),	%00010000			; Load P15
+	ld		A,			($FF00)
+	ld		A,			($FF00)
+	ld		A,			($FF00)
+	ld		A,			($FF00)
+	and		%00001111						; bounce and output mask
+	or		B								; add arrow keys
+	
+	cpl										; complement/inverse, because 0 is pressed
+
+	pop BC
+	ret
