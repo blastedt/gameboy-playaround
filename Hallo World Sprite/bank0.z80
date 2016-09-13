@@ -144,26 +144,28 @@ Start::
 	call 	WAIT_VBLANK						;wait for vblank so we can write to VRAM
 
 	ld		A,				0				
-	ldh		[_LCDC],		A				;turn off LCD
+	ldh		[_LCDCH],		A				;turn off LCD
 
 	call 	INIT_OAM_MIRROR
-	;call 	CLEAR_MAP
+	call 	CLEAR_MAP
 	call	LOAD_TILES
 	call	LOAD_DMA_TRANSFER_HIGH
 	call	LOAD_OAM_MIRROR
 	call	DMA_TRANSFER
 
 	ld		A,				_PALETTE_NORMAL
-	ldh		[_BG_PALETTE],	A
+	ldh		[_BG_PALETTEH],	A
 	
-	ld		A,				%10010001		;LCD on, BG tiles $8000, tile map 0, bg display on
-	ldh		[_LCDC],		A
+	ld		A,				%10010011		;LCD on, BG tiles $8000, tile map 0, bg display on
+	ldh		[_LCDCH],		A
 
 
 
 Loop::
-	call	WAIT_VBLANK
-	call	DMA_TRANSFER
+;	call	WAIT_VBLANK
+;	ld		A,				$1
+;	ld		[OAM_CHANGE_FLAG],	A
+;	call	DMA_TRANSFER
 	jp Loop				;run execution forever
 
 
@@ -177,6 +179,21 @@ SCROLL::
 ;	ld		A,				$0
 ;scroll_finish:
 	ld		[_SCX],			A
+	ret
+
+CLEAR_MAP::
+	push	HL
+	push	BC
+	push	DE
+
+	ld		HL,				_BG_MAP_0
+	ld		BC,				$400			;size of bg map 0
+	ld		D,				0
+	call	MEMSET							;clear the map
+
+	pop		DE
+	pop		BC
+	pop		HL
 	ret
 
 INIT_OAM_MIRROR::
@@ -217,7 +234,7 @@ LOAD_OAM_MIRROR::
 
 	ld		HL,				OAM_MIRROR
 	ld		DE,				HELLO_WORLD_OAM
-	ld		BC,				4*12				;$30 of the $A0 bytes allowed
+	ld		BC,				$2C				;$28 of the $A0 bytes allowed
 	call 	MEMCPY
 
 	ld		A,				$1
@@ -248,6 +265,7 @@ DMA_TRANSFER::
 
 	ld		A,				[OAM_CHANGE_FLAG]
 	call	nz,				DMA_HIGH_LOC		;only do dma transfer if there are changes to propagate
+	;call	DMA_HIGH_LOC
 	ld		A,				$0
 	ld		[OAM_CHANGE_FLAG],	A				;reset flag
 	pop 	AF
@@ -260,7 +278,7 @@ DMA_TRANSFER_HIGH::
 	ld		A,				$28				;dec 40, need to wait for transfer to complete
 DTH_WAIT:	
 	dec		A								;1 cycle
-	jp		nz,				DTH_WAIT		;4 cycles
+	jr		nz,				DTH_WAIT		;4 cycles
 											;total 200 cycles ~ 210 microseconds
 	ret										;get out of high ram
 DMA_TRANSFER_HIGH_END:
@@ -329,18 +347,18 @@ HELLO_WORLD_OAM:
 ;DB $08,$05,$0C,$0C,$0F,$00,$17,$0F  ;HELLO WO
 ;DB $12,$0C,$04						;RLD
 ;OAM format - byte 0 y+16, byte 1 x+8, byte 2 pattern number, byte 3 flags
-DB $10, $08, $08, %00000000			;(8, 16), pattern 8, no flags
-DB $10, $10, $05, $0
-DB $10, $18, $0C, $0
-DB $10, $20, $0C, $0
-DB $10, $28, $0F, $0
+DB $20, $08, $08, $0			;(8, 16), pattern 8, no flags
+DB $20, $10, $05, $0
+DB $20, $18, $0C, $0
+DB $20, $20, $0C, $0
+DB $20, $28, $0F, $0
 ;DB $10, $30, $00, $0				; no need for a blank sprite
-DB $10, $38, $17, $0
-DB $10, $40, $0F, $0
-DB $10, $48, $12, $0
-DB $10, $50, $0C, $0
-DB $10, $58, $04, $0
-
+DB $20, $38, $17, $0
+DB $20, $40, $0F, $0
+DB $20, $48, $12, $0
+DB $20, $50, $0C, $0
+DB $20, $58, $04, $0
+DB $00, $01, $08, $10
 
 
 

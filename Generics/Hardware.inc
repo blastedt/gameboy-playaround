@@ -16,6 +16,7 @@ _TILE_DATA_1		EQU				$8800 ; $Should be mostly unused? This is the signed bank, 
 ;;;;;;;;;;;;;;Video
 
 _BG_PALETTE			EQU				$FF47
+_BG_PALETTEH		EQU				$47
 
 ;;;;;;;;;;;;;;I/O
 
@@ -61,6 +62,7 @@ _SOUND_OFF_FLAG		EQU				%10000000					;bit to drop to 0 to disable sound
 
 ;;;;;;;;;;;;;LCD control
 _LCDC				EQU				$FF40							;begins at 1001 0001
+_LCDCH				EQU				$40
 _LCDC_OP			EQU				%10000000					;turn LCD on/off, starts on
 _LCDC_WND_MAP		EQU				%01000000					;choose $9800 for the window map
 _LCDC_WND_DISP		EQU				%00100000					;turn window on or off
@@ -71,3 +73,4 @@ _LCDC_OBJ_DISP		EQU				%00000010					;enable or disable sprite rendering (defaul
 _LCDC_BG_DISP		EQU				%00000001					;display the background
 
 _rLY				EQU				$FF44							;$FF44 is lcdc y coordinate, $91 thru $98 mean vblank
+_rLYH				EQU				$44

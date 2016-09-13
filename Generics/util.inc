@@ -2,7 +2,7 @@ INCLUDE "../Generics/Hardware.inc"
 
 SECTION "util", HOME
 WAIT_VBLANK::
-	ldh		A,		[_rLY]				;load vertical line
+	ldh		A,		[_rLYH]				;load vertical line
 	cp		$91
 	jr		nz,		WAIT_VBLANK			;jump short to loop if not in vblank
 	ret
